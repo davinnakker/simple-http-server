@@ -1,3 +1,24 @@
+"""
+HTTP SERVER
+
+See Architecture Diagram -> server.md
+
+-- Server --
+This function will create the main socket that bind to an address. Using a loop it will accept
+incoming connections and spawn a new socket connection and pass it two a new child thread.
+
+-- Connection --
+This is a threaded class that will use the new socket connection passed by the server and process
+incoming http requests. 
+It should perform the following:
+    - receive bytes until end point is identified
+    - parse http request
+    - route request to resource
+    - construct a response
+    - send the http response
+
+"""
+
 import socket
 import threading
 
@@ -6,7 +27,7 @@ from http_utils import RequestMethod, parse_request, parse_request_header, parse
 IP_ADDRESS = "0.0.0.0"
 PORT = 5000
 
-class RequestWorker(threading.Thread):
+class ConnectionWorker(threading.Thread):
     def __init__(self, connection: socket.socket):
         super().__init__()
         self.connection = connection
@@ -70,7 +91,7 @@ def run_server():
         while True:
             connection, address = server.accept()
             print(f"\nAddress: {address} has connected")
-            thread = RequestWorker(connection)
+            thread = ConnectionWorker(connection)
             thread.start()
 
             with connection:
