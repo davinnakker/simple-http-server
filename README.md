@@ -29,8 +29,8 @@ Python JSON library
 
 # Useful Websites
 
-* [Beej's Guide to Network Programming](http://url.link.goes.here](https://beej.us/guide/bgnet/)
-* [Python Socket Module](http://url.link.goes.here](https://docs.python.org/3/library/socket.html)
+* [Beej's Guide to Network Programming](https://beej.us/guide/bgnet/)
+* [Python Socket Module](https://docs.python.org/3/library/socket.html)
 
 # Future Work
 
