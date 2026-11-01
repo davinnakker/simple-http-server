@@ -9,7 +9,7 @@ my library to hide away the lower level socket details.
 
 My purpose for writing this software was to better understand client-server communication and how HTTP works at a lower level.
 
-[Client Server DEMO](http://youtube.link.goes.here)
+[Client Server DEMO](https://youtu.be/zSwY4bwLgko)
 
 # Network Communication
 
