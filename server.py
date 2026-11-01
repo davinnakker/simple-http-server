@@ -21,15 +21,18 @@ It should perform the following:
 
 import socket
 import threading
+import json
 
 from http_utils import parse_request_header, parse_request_body
+from handler import handler
 
 IP_ADDRESS = "0.0.0.0"
 PORT = 5000
 
 class ConnectionWorker(threading.Thread):
-    def __init__(self, connection: socket.socket, address):
+    def __init__(self, handler: handler, connection: socket.socket, address):
         super().__init__()
+        self.handler = handler
         self.connection = connection
         self.address = address
         self.body = None
@@ -61,6 +64,10 @@ class ConnectionWorker(threading.Thread):
             body_obj = parse_request_body(body)
             self.body_obj = body_obj
             print(self.body_obj)
+        else:
+            self.body_obj = {}
+        response = self.handler(self.header_obj, self.body_obj)
+        self._send_response(response)
 
     def _receive_bytes_till(self, end_pattern = "\r\n\r\n"):
         """
@@ -69,16 +76,14 @@ class ConnectionWorker(threading.Thread):
         it will return the string form of all bytes before the 'end pattern' as well
         as a string of the extra bytes if any after the end_pattern.
         """
-        with self.connection:
-            header_bytes = b""
-            while b"\r\n\r\n" not in header_bytes:
-                chunk = self.connection.recv(1000)
-                if not chunk: # empty chunk means client disconnected
-                    break
-                header_bytes += chunk
-
-            header, _, extra = header_bytes.decode().partition(end_pattern)
-            return header, extra
+        header_bytes = b""
+        while b"\r\n\r\n" not in header_bytes:
+            chunk = self.connection.recv(1000)
+            if not chunk: # empty chunk means client disconnected
+                break
+            header_bytes += chunk
+        header, _, extra = header_bytes.decode().partition(end_pattern)
+        return header, extra
 
     def _receive_bytes_amount(self, byte_limit: int, starting_bytes: b""):
         """
@@ -86,16 +91,20 @@ class ConnectionWorker(threading.Thread):
         until it has reaches the 'byte limit' and will then return that number 
         of bytes received as a string.
         """
-        with self.connection:
-            body_bytes = starting_bytes
-            while len(body_bytes) < byte_limit:
-                chunk = self.connection.recv(100)
-                if not chunk:
-                    break
-                body_bytes += chunk
+        body_bytes = starting_bytes
+        while len(body_bytes) < byte_limit:
+            chunk = self.connection.recv(100)
+            if not chunk:
+                break
+            body_bytes += chunk
+        body = body_bytes[:byte_limit].decode()
+        return body
 
-            body = body_bytes[:byte_limit].decode()
-            return body
+    def _send_response(self, json_obj):
+        string_json = json.dumps(json_obj)
+        print(string_json)
+        json_bytes = string_json.encode()
+        self.connection.sendall(json_bytes)
 
 
 def run_server():
@@ -109,7 +118,7 @@ def run_server():
         while True:
             connection, address = server.accept()
             print(f"\nAddress: {address} has connected")
-            thread = ConnectionWorker(connection, address)
+            thread = ConnectionWorker(handler, connection, address)
             thread.start()
 
 if __name__ == "__main__":
